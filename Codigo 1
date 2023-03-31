@@ -1,0 +1,216 @@
+/*
+ * File:  Lab06
+ * Author: Acer-Oscar
+ *
+ */
+#pragma config FOSC = INTRC_NOCLKOUT// Oscillator Selection bits (INTOSCIO oscillator: I/O function on RA6/OSC2/CLKOUT pin, I/O function on RA7/OSC1/CLKIN)
+#pragma config WDTE = OFF       // Watchdog Timer Enable bit (WDT disabled and can be enabled by SWDTEN bit of the WDTCON register)
+#pragma config PWRTE = OFF      // Power-up Timer Enable bit (PWRT disabled)
+#pragma config MCLRE = OFF      // RE3/MCLR pin function select bit (RE3/MCLR pin function is digital input, MCLR internally tied to VDD)
+#pragma config CP = OFF         // Code Protection bit (Program memory code protection is disabled)
+#pragma config CPD = OFF        // Data Code Protection bit (Data memory code protection is disabled)
+#pragma config BOREN = OFF      // Brown Out Reset Selection bits (BOR disabled)
+#pragma config IESO = OFF       // Internal External Switchover bit (Internal/External Switchover mode is disabled)
+#pragma config FCMEN = OFF      // Fail-Safe Clock Monitor Enabled bit (Fail-Safe Clock Monitor is disabled)
+#pragma config LVP = OFF        // Low Voltage Programming Enable bit (RB3 pin has digital I/O, HV on MCLR must be used for programming)
+#pragma config BOR4V = BOR40V   // Brown-out Reset Selection bit (Brown-out Reset set to 4.0V)
+#pragma config WRT = OFF        // Flash Program Memory Self Write Enable bits (Write protection off)
+
+// #pragma config statements should precede project file includes.
+// Use project enums instead of #define for ON and OFF.
+
+#include <xc.h>
+#include <stdint.h>
+#define _tmr0_value 150
+#define _XTAL_FREQ 8000000 //Sacar delay 
+int muestra;
+void __interrupt() isr(void){
+    if (T0IF){
+        TMR0 = _tmr0_value;
+        T0IF = 0;
+        
+    }
+}
+void setup(void);
+
+void main(void) {
+
+    setup();
+    while(1){
+        ADCON0bits.CHS = 0b0000;//Configura el canal de entrada analógico del conversor analógico a digital (ADC) en 0. Es decir, se selecciona el pin RA0 como entrada analógica
+        ADCON0bits.GO_DONE = 1; //Se establece la señal de inicio de conversión ADC.
+        while (ADCON0bits.GO_DONE);//Espera hasta que la conversión ADC se complete.
+        int adc1 = ((ADRESH<<8) | ADRESL);//Se lee el resultado de la conversión ADC y se guarda en la variable adc1
+        PORTC = (char)(adc1>>2); // El valor de adc1 se desplaza dos bits a la derecha y se almacena en el puerto C. 
+        __delay_ms(10);
+        
+        ADCON0bits.CHS = 0b0001; //Se cambia el canal de entrada analógico del ADC al pin RA1.
+        ADCON0bits.GO_DONE = 1; //  Se inicia una nueva conversión ADC.
+        while (ADCON0bits.GO_DONE); //  Espera hasta que la conversión ADC se complete.
+
+        int adc0 = ((ADRESH<<8) | ADRESL); //Se lee el resultado de la conversión ADC y se guarda en la variable adc0.
+        int v = adc0/2; // Esto se hace porque el valor del ADC es de 10 bits, pero la tensión máxima que puede medir el ADC es de 5V, por lo que se asume que la referencia del ADC es de 2.5V y se divide por dos para obtener la tensión medida en el pin RA1.
+        int Ds1 = v / 100;
+        
+        int Ds2 = (v % 100) / 10;
+        
+        
+        int Ds3 = v % 10;
+        int muestra;
+        
+         //Tabla Primer display
+        switch (Ds1) {
+            case 0:
+                muestra = 0b00111111;
+                break;
+            case 1:
+                muestra = 0b10000110;
+                break;
+            case 2:
+                muestra = 0b11011011;
+                break;
+            case 3:
+                muestra = 0b11001111;
+                break;
+            case 4:
+                muestra = 0b11100110;
+                break;
+            case 5:
+                muestra = 0b11101101;
+                break;
+            case 6:
+                muestra = 0b11111101;
+                break;
+            case 7:
+                muestra = 0b10000111;
+                break;
+            case 8:
+                muestra = 0b11111111;
+                break;
+            case 9:
+                muestra = 0b11100111;
+                break;
+            default:
+                break;
+        }
+  
+        //Mostrar valor en display
+        PORTEbits.RE0 = 1; // activa el display 1 
+        PORTD=muestra;
+        __delay_ms(5); // tiempo de espera 
+        PORTEbits.RE0 = 0; // se apaga el display 1 
+        
+        switch (Ds2) {
+            case 0:
+                muestra = 0b00111111;
+                break;
+            case 1:
+                muestra;
+            case 2:
+                muestra = 0b01011011;
+                break;
+            case 3:
+                muestra = 0b01001111;
+                break;
+            case 4:
+                muestra = 0b01100110;
+                break;
+            case 5:
+                muestra = 0b01101101;
+                break;
+            case 6:
+                muestra = 0b01111101;
+                break;
+            case 7:
+                muestra = 0b00000111;
+                break;
+            case 8:
+                muestra = 0b01111111;
+                break;
+            case 9:
+                muestra = 0b01100111;
+                break;
+            default:
+                break;
+        }
+        //Mostrar valor en display
+        PORTEbits.RE1 = 1; //  activa el display 2
+        PORTD=muestra;
+        __delay_ms(5); // espera
+        PORTEbits.RE1 = 0; // se apaga el display 2 
+        
+        //tabla tercer display
+        switch (Ds3) {
+            case 0:
+                muestra = 0b00111111;
+                break;
+            case 1:
+                muestra = 0b00000110;
+                break;
+            case 2:
+                muestra = 0b01011011;
+                break;
+            case 3:
+                muestra = 0b01001111;
+                break;
+            case 4:
+                muestra = 0b01100110;
+                break;
+            case 5:
+                muestra = 0b01101101;
+                break;
+            case 6:
+                muestra= 0b01111101;
+                break;
+            case 7:
+                muestra = 0b00000111;
+                break;
+            case 8:
+                muestra = 0b01111111;
+                break;
+            case 9:
+                muestra = 0b01100111;
+                break;
+            default:
+                break;
+        }
+        //Mostrar valor en display
+        PORTEbits.RE2 = 1; // activa el display 3
+        PORTD=muestra;
+        __delay_ms(5); // Espera
+        PORTEbits.RE2 = 0; // se apaga el display 2 
+    }
+    return;
+}
+
+void setup(void){
+     //Configuración del ADC
+    ANSEL = 0b11; //entradas analógicas
+    TRISA = 0b11; //  entradas
+    ANSEL = 0;
+    ANSELH = 0;
+    TRISC = 0;
+    TRISD = 0;
+    TRISB = 0;
+    TRISE = 0x00; 
+    //config tmr0
+    OPTION_REGbits.T0CS = 0;
+    OPTION_REGbits.PSA = 0;
+    OPTION_REGbits.PS = 0b111;
+    TMR0 = _tmr0_value;
+    OSCCONbits.IRCF = 0b111; //8Mhz
+    OSCCONbits.SCS = 1;
+    
+    //configuración de la interrupcion del TMR0
+    INTCONbits.T0IF = 0;
+    INTCONbits.T0IE = 1;
+    INTCONbits.GIE = 1;
+    ADCON0bits.ADCS = 0b10;
+    __delay_ms(1);
+    ADCON1bits.ADFM = 1;
+    ADCON1bits.VCFG0 = 0;
+    ADCON1bits.VCFG1 = 0;
+    ADCON0bits.ADON = 1;
+    ADIF = 0;
+          
+}
